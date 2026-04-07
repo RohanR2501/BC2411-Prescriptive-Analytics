@@ -1,0 +1,41 @@
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.summary-card {
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: #e2e8f0;
+}
+
+.summary-card h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.summary-card p {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.badge-container {
+    margin-top: 10px;
+}
+
+.day-badge {
+    display: inline-block;
+    background: #312e81;
+    color: #e0e7ff;
+    padding: 6px 10px;
+    border-radius: 999px;
+    margin: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
