@@ -114,12 +114,6 @@ frontend
 VITE_API_BASE_URL=https://<your-backend-url>
 ```
 
-Example:
-
-```env
-VITE_API_BASE_URL=https://bc2411-prescriptive-analytics.onrender.com
-```
-
 4. Deploy
 
 ---
