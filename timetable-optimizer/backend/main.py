@@ -11,11 +11,12 @@ app = FastAPI()
 # This allows your React frontend (running on port 5173) to talk to this backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # This defines exactly what shape of data the frontend must send
 class OptimizeRequest(BaseModel):
@@ -24,9 +25,11 @@ class OptimizeRequest(BaseModel):
     min_au: int
     weights: dict[str, float]
 
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
 
 @app.post("/optimize")
 def optimize(req: OptimizeRequest):
@@ -39,7 +42,7 @@ def optimize(req: OptimizeRequest):
             interest_dict=req.interest_dict,
             weights=req.weights,
             max_au=req.max_au,
-            min_au=req.min_au
+            min_au=req.min_au,
         )
         return result
 
