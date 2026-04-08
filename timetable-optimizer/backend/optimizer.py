@@ -131,7 +131,9 @@ def add_walking_time_constraints(model, y, index_locations, time_slots, location
 # =============================================================================
 # 2. Main Optimization Function — returns JSON-serializable dict
 # =============================================================================
-def optimize_schedule(csv_filepath, interest_dict, weights, max_au, min_au=0):
+def optimize_schedule(
+    csv_filepath, interest_dict, weights, max_au, min_au=0, num_solutions=1
+):
     """
     Returns a dict with keys:
         selected_courses, total_au, total_interest,
@@ -222,6 +224,10 @@ def optimize_schedule(csv_filepath, interest_dict, weights, max_au, min_au=0):
 
     model.setParam("OutputFlag", 0)
 
+    requested_solutions = max(1, int(num_solutions))
+    model.setParam("PoolSolutions", requested_solutions)
+    model.setParam("PoolSearchMode", 2 if requested_solutions > 1 else 0)
+
     x, y, z = create_decision_variables(
         model, list(course_indexes.keys()), valid_indexes, days_list
     )
@@ -260,66 +266,74 @@ def optimize_schedule(csv_filepath, interest_dict, weights, max_au, min_au=0):
     model.optimize()
 
     # --- Infeasible check ---
-    if model.Status != GRB.OPTIMAL:
+    if model.SolCount == 0:
         raise ValueError(
             "No feasible schedule could be found. "
             "Check AU limits, course availability, or time clash constraints."
         )
 
-    # =================================================================
-    # Build return dictionary
-    # =================================================================
+    def build_solution(sol_number):
+        model.setParam("SolutionNumber", sol_number)
 
-    # selected_courses
-    selected_courses = []
-    for c in x.keys():
-        if x[c].X > 0.5:
-            selected_index = None
-            sessions = []
-            for cg in valid_indexes:
-                if cg[0] == c and y[cg].X > 0.5:
-                    selected_index = cg[1]
-                    sessions = list(dict.fromkeys(index_info[cg]))  # deduplicated
-                    break
-            selected_courses.append(
-                {
-                    "course_id": c,
-                    "au": int(au_dict.get(c, 0)),
-                    "interest": int(interest_dict.get(c, 0)),
-                    "selected_index": selected_index,
-                    "sessions": sessions,  # list of raw session strings
-                }
+        selected_courses = []
+        selected_index_pairs = []
+
+        for c in x.keys():
+            if x[c].Xn > 0.5:
+                selected_index = None
+                sessions = []
+                for cg in valid_indexes:
+                    if cg[0] == c and y[cg].Xn > 0.5:
+                        selected_index = cg[1]
+                        selected_index_pairs.append((c, selected_index))
+                        sessions = list(dict.fromkeys(index_info[cg]))
+                        break
+
+                selected_courses.append(
+                    {
+                        "course_id": c,
+                        "au": int(au_dict.get(c, 0)),
+                        "interest": int(interest_dict.get(c, 0)),
+                        "selected_index": selected_index,
+                        "sessions": sessions,
+                    }
+                )
+
+        days_on_campus = [d for d in days_list if z[d].Xn > 0.5]
+
+        walking_routes = []
+        occupied_slots = {}
+        for cg in valid_indexes:
+            if y[cg].Xn <= 0.5:
+                continue
+            for slot, loc in index_locations.get(cg, []):
+                occupied_slots[slot] = loc
+
+        for day_idx, day_name in enumerate(days_list):
+            day_slots = sorted(
+                [s for s in occupied_slots.keys() if (s - 1) // 16 == day_idx]
             )
+            if not day_slots:
+                continue
 
-    # days_on_campus
-    days_on_campus = [d for d in days_list if z[d].X > 0.5]
+            prev_loc = occupied_slots[day_slots[0]]
+            prev_slot = day_slots[0]
 
-    # walking_routes
-    # Build route transitions directly from selected class locations,
-    # so all day transitions are reflected in the API response.
-    walking_routes = []
-    occupied_slots = {}
-    for cg in valid_indexes:
-        if y[cg].X <= 0.5:
-            continue
-        for slot, loc in index_locations.get(cg, []):
-            occupied_slots[slot] = loc
-
-    for day_idx, day_name in enumerate(days_list):
-        day_slots = sorted(
-            [s for s in occupied_slots.keys() if (s - 1) // 16 == day_idx]
-        )
-        if not day_slots:
-            continue
-
-        prev_loc = occupied_slots[day_slots[0]]
-        prev_slot = day_slots[0]
-
-        for slot in day_slots[1:]:
-            curr_loc = occupied_slots[slot]
-            # New class segment starts when there is a gap in occupied slots.
-            if slot != prev_slot + 1:
-                if curr_loc != prev_loc:
+            for slot in day_slots[1:]:
+                curr_loc = occupied_slots[slot]
+                if slot != prev_slot + 1:
+                    if curr_loc != prev_loc:
+                        dist = CAMPUS_DISTANCE_MATRIX.get((prev_loc, curr_loc), 999)
+                        walking_routes.append(
+                            {
+                                "day": day_name,
+                                "from_node": prev_loc,
+                                "to_node": curr_loc,
+                                "distance": dist,
+                                "path_list": get_path(prev_loc, curr_loc),
+                            }
+                        )
+                elif curr_loc != prev_loc:
                     dist = CAMPUS_DISTANCE_MATRIX.get((prev_loc, curr_loc), 999)
                     walking_routes.append(
                         {
@@ -330,27 +344,51 @@ def optimize_schedule(csv_filepath, interest_dict, weights, max_au, min_au=0):
                             "path_list": get_path(prev_loc, curr_loc),
                         }
                     )
-            # Continuous occupancy but venue changed; count as immediate transition.
-            elif curr_loc != prev_loc:
-                dist = CAMPUS_DISTANCE_MATRIX.get((prev_loc, curr_loc), 999)
-                walking_routes.append(
-                    {
-                        "day": day_name,
-                        "from_node": prev_loc,
-                        "to_node": curr_loc,
-                        "distance": dist,
-                        "path_list": get_path(prev_loc, curr_loc),
-                    }
-                )
 
-            prev_loc = curr_loc
-            prev_slot = slot
+                prev_loc = curr_loc
+                prev_slot = slot
 
+        total_au_value = int(sum(course["au"] for course in selected_courses))
+        total_interest_value = int(
+            sum(course["interest"] for course in selected_courses)
+        )
+
+        return {
+            "selected_courses": selected_courses,
+            "total_au": total_au_value,
+            "total_interest": total_interest_value,
+            "days_on_campus": days_on_campus,
+            "walking_routes": walking_routes,
+            "objective_value": round(float(model.PoolObjVal), 4),
+            "_signature": tuple(sorted(selected_index_pairs)),
+        }
+
+    solutions = []
+    seen_signatures = set()
+    max_available = min(model.SolCount, requested_solutions)
+
+    for sol_number in range(max_available):
+        solution = build_solution(sol_number)
+        signature = solution.pop("_signature")
+        if signature in seen_signatures:
+            continue
+        seen_signatures.add(signature)
+        solutions.append(solution)
+
+    if not solutions:
+        raise ValueError(
+            "No feasible schedule could be found. "
+            "Check AU limits, course availability, or time clash constraints."
+        )
+
+    best_solution = solutions[0]
     return {
-        "selected_courses": selected_courses,
-        "total_au": int(total_au.getValue()),
-        "total_interest": int(total_int.getValue()),
-        "days_on_campus": days_on_campus,
-        "walking_routes": walking_routes,
-        "objective_value": round(model.ObjVal, 4),
+        "selected_courses": best_solution["selected_courses"],
+        "total_au": best_solution["total_au"],
+        "total_interest": best_solution["total_interest"],
+        "days_on_campus": best_solution["days_on_campus"],
+        "walking_routes": best_solution["walking_routes"],
+        "objective_value": best_solution["objective_value"],
+        "solution_count": len(solutions),
+        "solutions": solutions,
     }

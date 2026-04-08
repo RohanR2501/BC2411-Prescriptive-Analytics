@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import os
 from optimizer import optimize_schedule
 
@@ -24,6 +24,7 @@ class OptimizeRequest(BaseModel):
     max_au: int
     min_au: int
     weights: dict[str, float]
+    num_solutions: int = Field(default=1, ge=1, le=20)
 
 
 @app.get("/health")
@@ -43,6 +44,7 @@ def optimize(req: OptimizeRequest):
             weights=req.weights,
             max_au=req.max_au,
             min_au=req.min_au,
+            num_solutions=req.num_solutions,
         )
         return result
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 const DEFAULT_WEIGHTS = { alpha: 0.25, beta: 0.25, gamma: 0.25, delta: 0.25 };
+const REQUESTED_SOLUTIONS = 5;
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://bc2411-prescriptive-analytics.onrender.com";
 
@@ -68,6 +69,7 @@ export default function CourseInput({ onResults, onLoading = () => {}, loading =
           min_au: minAu,
           max_au: maxAu,
           weights,
+          num_solutions: REQUESTED_SOLUTIONS,
         }),
       });
 
@@ -76,7 +78,14 @@ export default function CourseInput({ onResults, onLoading = () => {}, loading =
       if (!response.ok) {
         setError(data.detail || "Something went wrong.");
       } else {
-        onResults(data);
+        const normalized = data?.solutions?.length
+          ? data
+          : {
+              ...data,
+              solutions: data ? [data] : [],
+              solution_count: data ? 1 : 0,
+            };
+        onResults(normalized);
       }
     } catch {
       setError("Could not reach the backend service. Please try again.");

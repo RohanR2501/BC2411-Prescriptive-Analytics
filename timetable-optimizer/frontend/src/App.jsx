@@ -8,10 +8,27 @@ import "./App.css";
 export default function App() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedSolutionIndex, setSelectedSolutionIndex] = useState(0);
+
+  const handleResults = (data) => {
+    setResults(data);
+    setSelectedSolutionIndex(0);
+  };
 
   const handleReset = () => {
     setResults(null);
+    setSelectedSolutionIndex(0);
   };
+
+  const solutions = Array.isArray(results?.solutions)
+    ? results.solutions
+    : (results ? [results] : []);
+
+  const safeSolutionIndex = Math.min(
+    Math.max(selectedSolutionIndex, 0),
+    Math.max(solutions.length - 1, 0)
+  );
+  const activeSolution = solutions[safeSolutionIndex] ?? null;
 
   return (
     <div className="app-container">
@@ -23,26 +40,51 @@ export default function App() {
         </p>
       )}
 
-      <CourseInput onResults={setResults} onLoading={setLoading} loading={loading} />
+      <CourseInput onResults={handleResults} onLoading={setLoading} loading={loading} />
 
-      {results && (
+      {results && activeSolution && (
         <>
           <button className="reset-btn" onClick={handleReset}>
             Reset
           </button>
 
+          <div className="solution-switcher">
+            <button
+              className="solution-btn"
+              onClick={() => setSelectedSolutionIndex((idx) => Math.max(0, idx - 1))}
+              disabled={safeSolutionIndex === 0 || solutions.length <= 1}
+            >
+              Previous Solution
+            </button>
+            <span className="solution-label">
+              Solution {safeSolutionIndex + 1} of {Math.max(solutions.length, 1)}
+            </span>
+            <button
+              className="solution-btn"
+              onClick={() =>
+                setSelectedSolutionIndex((idx) => Math.min(solutions.length - 1, idx + 1))
+              }
+              disabled={safeSolutionIndex === solutions.length - 1 || solutions.length <= 1}
+            >
+              Next Solution
+            </button>
+            {solutions.length <= 1 && (
+              <span className="solution-hint">Only one solution returned by current backend deployment.</span>
+            )}
+          </div>
+
           <ResultsSummary
-            total_au={results.total_au}
-            total_interest={results.total_interest}
-            days_on_campus={results.days_on_campus}
-            objective_value={results.objective_value}
+            total_au={activeSolution.total_au}
+            total_interest={activeSolution.total_interest}
+            days_on_campus={activeSolution.days_on_campus}
+            objective_value={activeSolution.objective_value}
           />
 
-          <TimetableGrid selected_courses={results.selected_courses} />
+          <TimetableGrid selected_courses={activeSolution.selected_courses} />
 
           <WalkingRoute
-            walking_routes={results.walking_routes}
-            days_on_campus={results.days_on_campus}
+            walking_routes={activeSolution.walking_routes}
+            days_on_campus={activeSolution.days_on_campus}
           />
         </>
       )}

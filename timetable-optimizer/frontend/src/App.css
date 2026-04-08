@@ -68,3 +68,41 @@ h2 {
 .reset-btn:hover {
   background: #4338ca;
 }
+
+.solution-switcher {
+  margin: 10px 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.solution-btn {
+  border: none;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.solution-btn:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+.solution-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.solution-label {
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.solution-hint {
+  color: #94a3b8;
+  font-size: 12px;
+}
