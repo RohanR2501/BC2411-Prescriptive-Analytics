@@ -67,22 +67,6 @@ Frontend runs on `http://localhost:5173`.
 - Do not commit local environment folders (`.venv`, `env`, etc.).
 - Do not commit secrets or license files (`gurobi.lic`, `.env`).
 
-## Deploy frontend (Vercel) + run backend locally (free)
-
-Vercel hosts the static frontend for free. For this setup, the FastAPI backend runs on **your own machine** in your conda environment.
-
-1. Push the repo to GitHub.
-2. Vercel: **New Project** → import repo → **Root Directory**: `timetable-optimizer/frontend`.
-3. In Vercel → **Environment Variables**, set:
-   - `VITE_API_BASE_URL` = a public URL that points to your local backend.
-
-To expose your local backend publicly, use a tunnel (examples):
-- **Cloudflare Tunnel** (recommended): map a public HTTPS URL to `http://localhost:8000`
-- **ngrok**: map a public HTTPS URL to `http://localhost:8000`
-
-Once you have the public URL, paste it into `VITE_API_BASE_URL` and redeploy in Vercel.
-
-CI: GitHub Actions runs `npm ci`, `npm run lint`, and `npm run build` for the frontend folder (see `.github/workflows/frontend-ci.yml`).
 
 ## Common Issues
 
