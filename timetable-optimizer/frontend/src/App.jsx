@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { API_BASE_URL } from "./config";
 import CourseInput from "./components/CourseInput";
 import ResultsSummary from "./components/ResultsSummary";
 import TimetableGrid from "./components/TimetableGrid";
@@ -9,6 +10,10 @@ export default function App() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedSolutionIndex, setSelectedSolutionIndex] = useState(0);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/ping`, { method: "GET", mode: "cors" }).catch(() => {});
+  }, []);
 
   const handleResults = (data) => {
     setResults(data);
@@ -69,7 +74,7 @@ export default function App() {
               Next Solution
             </button>
             {solutions.length <= 1 && (
-              <span className="solution-hint">Only one solution returned by current backend deployment.</span>
+              <span className="solution-hint">Only one solution returned by the current backend run.</span>
             )}
           </div>
 

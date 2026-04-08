@@ -32,6 +32,12 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/ping")
+def ping():
+    """Lightweight endpoint for frontend warm-up (e.g. cold-start on free hosting)."""
+    return {"status": "pong"}
+
+
 @app.post("/optimize")
 def optimize(req: OptimizeRequest):
     # The CSV lives in the same backend/ folder

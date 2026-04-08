@@ -3,6 +3,22 @@
 *.tmp
 *.bak
 
+# Secrets and local env (never commit)
+.env
+.env.*
+!.env.example
+gurobi.lic
+
+# Python / Node build artifacts (repo-wide)
+__pycache__/
+*.py[cod]
+node_modules/
+dist/
+dist-ssr/
+.venv/
+venv/
+env/
+
 # OS/editor noise
 .DS_Store
 Thumbs.db
