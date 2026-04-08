@@ -1,6 +1,8 @@
 import { useState } from "react";
 
 const DEFAULT_WEIGHTS = { alpha: 0.25, beta: 0.25, gamma: 0.25, delta: 0.25 };
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://bc2411-prescriptive-analytics.onrender.com";
 
 export default function CourseInput({ onResults, onLoading = () => {}, loading = false }) {
   const [courses, setCourses] = useState([{ id: "", interest: 5 }]);
@@ -58,7 +60,7 @@ export default function CourseInput({ onResults, onLoading = () => {}, loading =
     onLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/optimize", {
+      const response = await fetch(`${API_BASE_URL}/optimize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -77,7 +79,7 @@ export default function CourseInput({ onResults, onLoading = () => {}, loading =
         onResults(data);
       }
     } catch {
-      setError("Could not reach the backend. Is it running on port 8000?");
+      setError("Could not reach the backend service. Please try again.");
     } finally {
       onLoading(false);
     }

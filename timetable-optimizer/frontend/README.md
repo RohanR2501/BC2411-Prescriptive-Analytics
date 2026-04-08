@@ -15,7 +15,10 @@ React + Vite frontend for the timetable optimizer.
    - `npm install`
 2. Start dev server:
    - `npm run dev`
-3. Ensure backend is running on `http://localhost:8000`
+3. By default, the app calls the deployed backend at `https://bc2411-prescriptive-analytics.onrender.com`.
+4. Optional: Override backend URL with a Vite env variable:
+   - Create `.env` and set `VITE_API_BASE_URL=http://localhost:8000` (or another backend URL)
 
 The app sends optimization requests to:
-- `POST http://localhost:8000/optimize`
+
+- `POST <VITE_API_BASE_URL>/optimize` (or the default deployed backend URL above)
