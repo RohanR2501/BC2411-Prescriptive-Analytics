@@ -58,12 +58,9 @@ conda activate timetable_env
 pip install -r timetable-optimizer/backend/requirements.txt
 ````
 
-#### Gurobi License (Local)
-
-
+## Gurobi License
 You can either:
-=======
-3. Ensure Gurobi WLS credentials are available (this backend uses Gurobi Web License Service):
+   - Ensure Gurobi WLS credentials are available (this backend uses Gurobi Web License Service)
    - Copy `timetable-optimizer/backend/.env.example` to `timetable-optimizer/backend/.env`.
    - Set `WLSACCESSID`, `WLSSECRET`, and `LICENSEID` (integer) from your Gurobi account.
    - Alternatively, export the same variables in your shell; real env vars override `.env`.
