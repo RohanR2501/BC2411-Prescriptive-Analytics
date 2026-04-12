@@ -13,5 +13,5 @@ COPY . .
 
 EXPOSE 8000
 
-# Provide Gurobi WLS credentials at runtime via WLSACCESSID, WLSSECRET, and LICENSEID.
+# Set WLSACCESSID, WLSSECRET, LICENSEID at runtime. Local dev can use backend/.env (see .env.example).
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

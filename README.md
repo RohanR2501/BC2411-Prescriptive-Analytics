@@ -60,7 +60,14 @@ pip install -r timetable-optimizer/backend/requirements.txt
 
 #### Gurobi License (Local)
 
+<<<<<<< Updated upstream
 You can either:
+=======
+3. Ensure Gurobi WLS credentials are available (this backend uses Gurobi Web License Service):
+   - Copy `timetable-optimizer/backend/.env.example` to `timetable-optimizer/backend/.env`.
+   - Set `WLSACCESSID`, `WLSSECRET`, and `LICENSEID` (integer) from your Gurobi account.
+   - Alternatively, export the same variables in your shell; real env vars override `.env`.
+>>>>>>> Stashed changes
 
 * use a `gurobi.lic` file locally, OR
 * configure WLS environment variables (recommended)
@@ -294,3 +301,14 @@ Fix:
 
 For academic use only. Gurobi license terms apply.
 
+<<<<<<< Updated upstream
+=======
+- **Could not reach backend on port 8000**
+  - Ensure backend is running with `uvicorn` on `8000`.
+- **Deployed site cannot reach API**
+  - Set `VITE_API_BASE_URL` on Vercel to the tunnel URL that forwards to your local backend (HTTPS, no trailing slash).
+- **Gurobi license not found / optimization fails**
+  - Confirm `WLSACCESSID`, `WLSSECRET`, and `LICENSEID` are set in `backend/.env` (see `.env.example`) or in your process environment.
+- **No feasible schedule**
+  - Relax AU bounds or adjust selected courses/weights.
+>>>>>>> Stashed changes

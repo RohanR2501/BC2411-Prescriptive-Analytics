@@ -1,10 +1,17 @@
 # backend/main.py
 
+from pathlib import Path
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-import os
+
 from optimizer import optimize_schedule
+
+# Gurobi WLS: WLSACCESSID, WLSSECRET, LICENSEID (see .env.example).
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 app = FastAPI()
 
